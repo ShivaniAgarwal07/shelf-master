@@ -25,6 +25,8 @@ from django.views import generic
 
 
 
+
+
 class IndexView(generic.ListView):
     template_name = "polls/index.html"
     context_object_name = "latest_question_list"
@@ -33,11 +35,15 @@ class IndexView(generic.ListView):
         """Return the last five published questions."""
         return Questions.objects.order_by("-pub_date")[:5]
 
-
 class DetailView(generic.DetailView):
-    print(generic.DetailView)
-    model = Questions
-    template_name = "polls/detail.html"
+    model = Questions  # Specify the model to fetch data from
+    template_name = "polls/detail.html"  # Specify the template to render
+
+    # Optionally override `get_context_data` if additional context is needed.
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['extra_context'] = "Additional data if required"
+        return context
 
 
 class ResultsView(generic.DetailView):
@@ -47,32 +53,31 @@ class ResultsView(generic.DetailView):
 def vote(request, question_id):
     return HttpResponse("You're voting on question %s." % question_id)
 
-# def detail(request, question_id):
-#     question = get_object_or_404(Questions, pk=question_id)
-#     return render(request, "polls/detail.html", {"question": question})
+def detail(request, question_id):
+    question = get_object_or_404(Questions, pk=question_id)
+    return render(request, "polls/detail.html", {"question": question})
 
 
 
-# def vote(request, question_id):
-#     print(request)
-#     print(ques)
-#     question = get_object_or_404(Questions, pk=question_id)
-#     try:
-#         selected_choice = question.choice_set.get(pk=request.POST["choice"])
-#     except (KeyError, Choice.DoesNotExist):
-#         # Redisplay the question voting form.
-#         return render(
-#             request,
-#             "polls/detail.html",
-#             {
-#                 "question": question,
-#                 "error_message": "You didn't select a choice.",
-#             },
-#         )
-#     else:
-#         selected_choice.votes = F("votes") + 1
-#         selected_choice.save()
-#         # Always return an HttpResponseRedirect after successfully dealing
-#         # with POST data. This prevents data from being posted twice if a
-#         # user hits the Back button.
-#         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
+def vote(request, question_id):
+    
+    question = get_object_or_404(Questions, pk=question_id)
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST["choice"])
+    except (KeyError, Choice.DoesNotExist):
+        # Redisplay the question voting form.
+        return render(
+            request,
+            "polls/detail.html",
+            {
+                "question": question,
+                "error_message": "You didn't select a choice.",
+            },
+        )
+    else:
+        selected_choice.votes = F("votes") + 1
+        selected_choice.save()
+        # Always return an HttpResponseRedirect after successfully dealing
+        # with POST data. This prevents data from being posted twice if a
+        # user hits the Back button.
+        return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
